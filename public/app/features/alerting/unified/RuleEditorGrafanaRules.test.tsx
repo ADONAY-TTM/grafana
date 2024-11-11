@@ -6,7 +6,8 @@ import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { byRole } from 'testing-library-selector';
 
 import { contextSrv } from 'app/core/services/context_srv';
-import { mockFeatureDiscoveryApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
+import { setupMswServer } from 'app/features/alerting/unified/mockApi';
+import { PROMETHEUS_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
 import { DashboardSearchHit, DashboardSearchItemType } from 'app/features/search/types';
 import { AccessControlAction } from 'app/types';
 
@@ -17,7 +18,6 @@ import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor
 import { grantUserPermissions, mockDataSource } from './mocks';
 import { grafanaRulerGroup, grafanaRulerRule } from './mocks/grafanaRulerApi';
 import { setupDataSources } from './testSetup/datasources';
-import { buildInfoResponse } from './testSetup/featureDiscovery';
 import * as config from './utils/config';
 
 jest.mock('./components/rule-editor/ExpressionEditor', () => ({
@@ -50,7 +50,7 @@ const mocks = {
   },
 };
 
-const server = setupMswServer();
+setupMswServer();
 
 describe('RuleEditor grafana managed rules', () => {
   beforeEach(() => {
@@ -78,6 +78,7 @@ describe('RuleEditor grafana managed rules', () => {
         {
           type: 'prometheus',
           name: 'Prom',
+          uid: PROMETHEUS_DATASOURCE_UID,
           isDefault: true,
         },
         { alerting: false }
@@ -85,7 +86,6 @@ describe('RuleEditor grafana managed rules', () => {
     };
 
     setupDataSources(dataSources.default);
-    mockFeatureDiscoveryApi(server).discoverDsFeatures(dataSources.default, buildInfoResponse.mimir);
 
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
     mocks.searchFolders.mockResolvedValue([
