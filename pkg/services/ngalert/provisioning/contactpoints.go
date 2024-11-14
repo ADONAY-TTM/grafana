@@ -120,9 +120,9 @@ func (ecp *ContactPointService) GetContactPoints(ctx context.Context, q ContactP
 	return contactPoints, nil
 }
 
-// getContactPointDecrypted is an internal-only function that gets full contact point info, included encrypted fields.
+// getContactPointEncrypted is an internal-only function that gets full contact point info, including still-encrypted fields.
 // nil is returned if no matching contact point exists.
-func (ecp *ContactPointService) getContactPointDecrypted(ctx context.Context, orgID int64, uid string) (apimodels.EmbeddedContactPoint, error) {
+func (ecp *ContactPointService) getContactPointEncrypted(ctx context.Context, orgID int64, uid string) (apimodels.EmbeddedContactPoint, error) {
 	revision, err := ecp.configStore.Get(ctx, orgID)
 	if err != nil {
 		return apimodels.EmbeddedContactPoint{}, err
@@ -133,8 +133,8 @@ func (ecp *ContactPointService) getContactPointDecrypted(ctx context.Context, or
 		}
 		embeddedContactPoint, err := PostableGrafanaReceiverToEmbeddedContactPoint(
 			receiver,
-			models.ProvenanceNone, // TODO should be correct provenance?
-			ecp.decryptValueOrRedacted(true, receiver.UID),
+			models.ProvenanceNone,              // TODO should be correct provenance?
+			func(v string) string { return v }, // return as-is
 		)
 		if err != nil {
 			return apimodels.EmbeddedContactPoint{}, err
@@ -246,7 +246,7 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 	if contactPoint.Settings == nil {
 		return fmt.Errorf("%w: %s", ErrValidation, "settings should not be empty")
 	}
-	rawContactPoint, err := ecp.getContactPointDecrypted(ctx, orgID, contactPoint.UID)
+	rawContactPoint, err := ecp.getContactPointEncrypted(ctx, orgID, contactPoint.UID)
 	if err != nil {
 		return err
 	}
@@ -254,14 +254,25 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 	if err != nil {
 		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
-	for _, secretKey := range secretKeys {
-		secretValue := contactPoint.Settings.Get(secretKey).MustString()
-		if secretValue == apimodels.RedactedValue {
-			contactPoint.Settings.Set(secretKey, rawContactPoint.Settings.Get(secretKey).MustString())
+
+	// decrypt the existing settings
+	decryptFn := ecp.decryptValueOrRedacted(true, contactPoint.UID)
+	decryptedSettings := rawContactPoint.Settings.DeepCopy()
+	for _, key := range secretKeys {
+		if old, ok := decryptedSettings.CheckGet(key); ok {
+			decryptedSettings.Set(key, decryptFn(old.MustString()))
 		}
 	}
 
-	// validate merged values
+	// reify redacted values
+	for _, key := range secretKeys {
+		if newVal := contactPoint.Settings.Get(key).MustString(); newVal == apimodels.RedactedValue {
+			oldVal := decryptedSettings.Get(key).MustString()
+			contactPoint.Settings.Set(key, oldVal)
+		}
+	}
+
+	// validate reified contact point
 	if err := ValidateContactPoint(ctx, contactPoint, ecp.encryptionService.GetDecryptedValue); err != nil {
 		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
@@ -280,11 +291,16 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 		return err
 	}
 	for k, v := range extractedSecrets {
-		encryptedValue, err := ecp.encryptValue(v)
-		if err != nil {
-			return err
+		// fetch raw encrypted value
+		encryptedVal := rawContactPoint.Settings.Get(k).MustString()
+		// if the value is changed, replace the encrypted value
+		if decryptedSettings.Get(k).MustString() != v {
+			encryptedVal, err = ecp.encryptValue(v)
+			if err != nil {
+				return err
+			}
 		}
-		extractedSecrets[k] = encryptedValue
+		extractedSecrets[k] = encryptedVal
 	}
 
 	jsonData, err := contactPoint.Settings.MarshalJSON()
