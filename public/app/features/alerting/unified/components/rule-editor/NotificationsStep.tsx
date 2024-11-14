@@ -131,7 +131,7 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
         simplifiedModeInNotificationsStepEnabled ? ( // simplified mode is enabled
           <ManualAndAutomaticRoutingSimplified alertUid={alertUid} />
         ) : (
-          // simplified mode is disabled
+          // simplified mode is disabled. Eventually, we will get rid of this component
           <ManualAndAutomaticRouting alertUid={alertUid} />
         )
       ) : // when simplified routing is not enabled, render the notification preview as we did before
@@ -204,30 +204,9 @@ function ManualAndAutomaticRoutingSimplified({ alertUid }: { alertUid?: string }
   // const styles = useStyles2(getStyles);
 
   const [manualRouting] = watch(['manualRouting']);
-  // manualRoutingInForm is the value of the manualRouting field in the form, that taking in account precondition it should be the value the advancedMode should have
-  // const advancedMode = !manualRouting;
-
-  // // const routingOptions = [
-  // //   { label: 'Select contact point', value: RoutingOptions.ContactPoint },
-  // //   { label: 'Use notification policy', value: RoutingOptions.NotificationPolicy },
-  // // ];
-
-  // const onRoutingOptionChange = (option: RoutingOptions) => {
-  //   setValue('manualRouting', option === RoutingOptions.ContactPoint);
-  // };
 
   return (
     <Stack direction="column" gap={2}>
-      {/* <Stack direction="column">
-        <RadioButtonGroup
-          data-testid={manualRouting ? 'routing-options-contact-point' : 'routing-options-notification-policy'}
-          options={routingOptions}
-          value={manualRouting ? RoutingOptions.ContactPoint : RoutingOptions.NotificationPolicy}
-          onChange={onRoutingOptionChange}
-          className={styles.routingOptions}
-        />
-      </Stack> */}
-
       <RoutingOptionDescription manualRouting={manualRouting} />
 
       {manualRouting ? <SimplifiedRouting /> : <AutomaticRooting alertUid={alertUid} />}
