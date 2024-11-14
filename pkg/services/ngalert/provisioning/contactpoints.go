@@ -300,6 +300,9 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 				return err
 			}
 		}
+		if encryptedVal == "" {
+			continue
+		}
 		extractedSecrets[k] = encryptedVal
 	}
 
