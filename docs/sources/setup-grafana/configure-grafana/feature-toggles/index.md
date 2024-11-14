@@ -223,7 +223,7 @@ Experimental features might be changed or removed without prior notice.
 | `zipkinBackendMigration`                      | Enables querying Zipkin data source without the proxy                                                                                                                                                                                                                             |
 | `enableSCIM`                                  | Enables SCIM support for user and group management                                                                                                                                                                                                                                |
 | `crashDetection`                              | Enables browser crash detection reporting to Faro.                                                                                                                                                                                                                                |
-| `alertingNotificationsStepMode`               | Enables simplified step mode in the nottifications section                                                                                                                                                                                                                        |
+| `alertingNotificationsStepMode`               | Enables simplified step mode in the notifications section.                                                                                                                                                                                                                        |
 
 ## Development feature toggles
 
