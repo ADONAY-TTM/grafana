@@ -1,4 +1,4 @@
-import { render, userEvent, screen, waitFor } from 'test/test-utils';
+import { render, userEvent, screen } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { setPluginLinksHook } from '@grafana/runtime';
@@ -35,12 +35,6 @@ const user = userEvent.setup();
 setupMswServer();
 
 describe('RulesTable RBAC', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    jest.restoreAllMocks();
-    jest.resetAllMocks();
-  });
-
   describe('Grafana rules action buttons', () => {
     const grafanaRule = getGrafanaRule({ name: 'Grafana' });
 
@@ -51,7 +45,7 @@ describe('RulesTable RBAC', () => {
 
       render(<RulesTable rules={[grafanaRule]} />);
 
-      await waitFor(() => expect(ui.actionButtons.edit.query()).not.toBeInTheDocument());
+      expect(ui.actionButtons.edit.query()).not.toBeInTheDocument();
     });
 
     it('Should not render Delete button for users without the delete permission', async () => {
@@ -61,18 +55,18 @@ describe('RulesTable RBAC', () => {
 
       render(<RulesTable rules={[grafanaRule]} />);
 
-      await user.click(await ui.actionButtons.more.find());
+      await user.click(ui.actionButtons.more.get());
 
       expect(ui.moreActionItems.delete.query()).not.toBeInTheDocument();
     });
 
-    it('Should render Edit button for users with the update permission', async () => {
+    it('Should render Edit button for users with the update permission', () => {
       mocks.useAlertRuleAbility.mockImplementation((_rule, action) => {
         return action === AlertRuleAction.Update ? [true, true] : [false, false];
       });
       render(<RulesTable rules={[grafanaRule]} />);
 
-      expect(await ui.actionButtons.edit.find()).toBeInTheDocument();
+      expect(ui.actionButtons.edit.get()).toBeInTheDocument();
     });
 
     it('Should render Delete button for users with the delete permission', async () => {
@@ -82,7 +76,8 @@ describe('RulesTable RBAC', () => {
 
       render(<RulesTable rules={[grafanaRule]} />);
 
-      await user.click(await ui.actionButtons.more.find());
+      expect(ui.actionButtons.more.get()).toBeInTheDocument();
+      await user.click(ui.actionButtons.more.get());
       expect(ui.moreActionItems.delete.get()).toBeInTheDocument();
     });
 
@@ -134,14 +129,14 @@ describe('RulesTable RBAC', () => {
   describe('Cloud rules action buttons', () => {
     const cloudRule = getCloudRule({ name: 'Cloud' });
 
-    it('Should not render Edit button for users without the update permission', async () => {
+    it('Should not render Edit button for users without the update permission', () => {
       mocks.useAlertRuleAbility.mockImplementation((_rule, action) => {
         return action === AlertRuleAction.Update ? [true, false] : [true, true];
       });
 
       render(<RulesTable rules={[cloudRule]} />);
 
-      await waitFor(() => expect(ui.actionButtons.edit.query()).not.toBeInTheDocument());
+      expect(ui.actionButtons.edit.query()).not.toBeInTheDocument();
     });
 
     it('Should not render Delete button for users without the delete permission', async () => {
@@ -151,18 +146,18 @@ describe('RulesTable RBAC', () => {
 
       render(<RulesTable rules={[cloudRule]} />);
 
-      await user.click(await ui.actionButtons.more.find());
+      await user.click(ui.actionButtons.more.get());
       expect(ui.moreActionItems.delete.query()).not.toBeInTheDocument();
     });
 
-    it('Should render Edit button for users with the update permission', async () => {
+    it('Should render Edit button for users with the update permission', () => {
       mocks.useAlertRuleAbility.mockImplementation((_rule, action) => {
         return action === AlertRuleAction.Update ? [true, true] : [false, false];
       });
 
       render(<RulesTable rules={[cloudRule]} />);
 
-      expect(await ui.actionButtons.edit.find()).toBeInTheDocument();
+      expect(ui.actionButtons.edit.get()).toBeInTheDocument();
     });
 
     it('Should render Delete button for users with the delete permission', async () => {
@@ -172,8 +167,8 @@ describe('RulesTable RBAC', () => {
 
       render(<RulesTable rules={[cloudRule]} />);
 
-      await user.click(await ui.actionButtons.more.find());
-      expect(await ui.moreActionItems.delete.find()).toBeInTheDocument();
+      await user.click(ui.actionButtons.more.get());
+      expect(ui.moreActionItems.delete.get()).toBeInTheDocument();
     });
   });
 });
