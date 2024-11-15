@@ -189,7 +189,7 @@ func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 func authorizerFunc(ctx context.Context, attr authorizer.Attributes) (*authorizerParams, error) {
 	verb := attr.GetVerb()
 	name := attr.GetName()
-	if (!attr.IsResourceRequest()) || (name == "" && verb != utils.VerbCreate) {
+	if (!attr.IsResourceRequest()) || (name == "" && verb != utils.VerbCreate && verb != utils.VerbDelete) {
 		return nil, errNoResource
 	}
 
