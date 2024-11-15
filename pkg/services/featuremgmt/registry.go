@@ -1637,7 +1637,7 @@ var (
 		},
 		{
 			Name:         "alertingNotificationsStepMode",
-			Description:  "Enables simplified step mode in the nottifications section",
+			Description:  "Enables simplified step mode in the notifications section",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
 			FrontendOnly: true,
