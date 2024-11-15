@@ -412,7 +412,7 @@ func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper
 		require.JSONEq(t, expectedResult, client.SanitizeJSON(found))
 	})
 
-	t.Run("Do CRUD (just CR for now) via k8s (and check that legacy api still works)", func(t *testing.T) {
+	t.Run("Do CRUD via k8s (and check that legacy api still works)", func(t *testing.T) {
 		client := helper.GetResourceClient(apis.ResourceClientArgs{
 			// #TODO: figure out permissions topic
 			User: helper.Org1.Admin,
@@ -439,7 +439,7 @@ func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper
 		}
 		slices.Sort(uids) // make list compare stable
 
-		// Check all playlists
+		// Check all folders
 		for _, uid := range uids {
 			getFromBothAPIs(t, helper, client, uid, nil)
 		}
@@ -460,8 +460,13 @@ func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper
 		require.Equal(t, first.GetUID(), updated.GetUID())
 		require.Equal(t, "Test folder (replaced from k8s; 1 item; PUT)", title)
 		require.Equal(t, "New description", description)
+
 		// #TODO figure out why this breaks just for MySQL integration tests
 		// require.Less(t, first.GetResourceVersion(), updated.GetResourceVersion())
+
+		// delete test
+		errDelete := client.Resource.Delete(context.Background(), first.GetName(), metav1.DeleteOptions{})
+		require.NoError(t, errDelete)
 	})
 	return helper
 }
